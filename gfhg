@@ -1,0 +1,96 @@
+import sqlite3
+import logging
+
+# Ініціалізація об'єкта логування
+logging.basicConfig(filename='admin.log', level=logging.INFO, format='%(asctime)s - %(message)s')
+
+# Функція для логування дій адміністратора
+def log_admin_action(action):
+    logging.info(action)
+
+# Функція для підключення до бази даних
+def connect_to_database():
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    return conn, cursor
+
+# Функція для відключення від бази даних
+def disconnect_from_database(conn):
+    conn.commit()
+    conn.close()
+
+# Функція для перегляду товару
+def view_product(product_id):
+    conn, cursor = connect_to_database()
+
+    # Виконання запиту SELECT для отримання інформації про товар за заданим ID
+    cursor.execute("SELECT * FROM products WHERE id=?", (product_id,))
+    product = cursor.fetchone()
+
+    disconnect_from_database(conn)
+
+    return product
+
+# Функція для додавання товару
+def add_product(name, description, price):
+    conn, cursor = connect_to_database()
+
+    # Виконання запиту INSERT для додавання нового товару
+    cursor.execute("INSERT INTO products (name, description, price) VALUES (?, ?, ?)",
+                   (name, description, price))
+    disconnect_from_database(conn)
+
+    log_admin_action("Added product: {}".format(name))
+
+# Функція для видалення товару
+def delete_product(product_id):
+    conn, cursor = connect_to_database()
+
+    # Виконання запиту DELETE для видалення товару за заданим ID
+    cursor.execute("DELETE FROM products WHERE id=?", (product_id,))
+    disconnect_from_database(conn)
+
+    log_admin_action("Deleted product with ID: {}".format(product_id))
+
+# Функція для редагування товару
+def edit_product(product_id, name, description, price):
+    conn, cursor = connect_to_database()
+
+    # Виконання запиту UPDATE для редагування товару за заданим ID
+    cursor.execute("UPDATE products SET name=?, description=?, price=? WHERE id=?",
+                   (name, description, price, product_id))
+    disconnect_from_database(conn)
+
+    log_admin_action("Edited product with ID: {}".format(product_id))
+
+# Функція для перегляду всіх товарів
+def view_all_products():
+    conn, cursor = connect_to_database()
+
+    # Виконання запиту SELECT для отримання всіх товарів
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+
+    disconnect_from_database(conn)
+
+    return products
+
+# Приклади виклику функцій
+
+# Перегляд товару за ID
+product = view_product(1)
+print(product)  # Виведе інформацію про товар з ID=1
+
+# Додавання нового товару
+add_product("Новий товар", "Опис нового товару", 49.99)
+
+# Видалення товару за ID
+delete_product(2)  # Видаляє товар з ID=2
+
+# Редагування товару за ID
+edit_product(3, "Змінена назва", "Змінений опис", 99.99)  # Змінює товар з ID=3
+
+# Перегляд всіх товарів
+products = view_all_products()
+for product in products:
+    print(product)
